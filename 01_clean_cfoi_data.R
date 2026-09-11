@@ -37,12 +37,12 @@ library(here)
 
 # ---- 1. Define file paths and target categories --------------------------------
 
-data_folder <- here("data", "cofi_rate")
+data_folder <- here("data", "cfoi_rate")
 
 if (!dir.exists(data_folder)) {
   stop(
     "Data folder not found at ", data_folder,
-    ". Make sure the repo's data/cofi_rate folder (with raw BLS .xlsx files) ",
+    ". Make sure the repo's data/cfoi_rate folder (with raw BLS .xlsx files) ",
     "was downloaded/cloned correctly, and that you've opened the .Rproj file ",
     "for this repo so the working directory is set correctly."
   )
