@@ -10,7 +10,7 @@
 # Injuries (CFOI) - https://www.bls.gov/iif/fatal-injuries-tables.htm
 #
 # Inputs:
-#   - One .xlsx file per year in data/cofi_rate, as downloaded from BLS
+#   - One .xlsx file per year in data/cfoi_rate, as downloaded from BLS
 #
 # Outputs:
 #   - bls_fatal_injury_rate_all_years.csv
