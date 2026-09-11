@@ -43,25 +43,6 @@ and aquaculture).
 - **Measure used:** Fatal injury rate per 100,000 full-time equivalent
   workers
 
-## Repository Structure
-
-bls_injury_illness_fatality/
-├── data/
-│   ├── non_fatal_injury_rate/     # Raw PDF and Excel source files (SOII)
-│   └── cfoi_rate/                 # Raw Excel source files (CFOI), one per year
-├── scripts/
-│   ├── clean_nonfatal_injury_illness.R
-│   └── clean_fatality_data.R
-├── output/
-│   ├── bls_injury_illness_all_years.csv
-│   ├── injury_illness_incidence_rate_table.csv
-│   ├── bls_fatal_injury_rate_all_years.csv
-│   └── fatal_injury_rate_table.csv
-└── README.md
-
-> **Note:** Update the paths above to match your actual folder names if
-> different from what's listed here.
-
 ## Scripts
 
 ### `clean_nonfatal_injury_illness.R`
