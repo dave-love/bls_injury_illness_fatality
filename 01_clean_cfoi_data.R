@@ -4,13 +4,14 @@
 # Purpose: Reads BLS Census of Fatal Occupational Injuries (CFOI) Excel files
 # (one per year), extracts fatal injury rates for a subset of industries/
 # occupations relevant to this study, combines them across years, and builds
-# a summary table (with an all-years average row).
+# a wide-format summary table (with an all-years average row).
 #
 # Data source: U.S. Bureau of Labor Statistics, Census of Fatal Occupational
-# Injuries (CFOI) - https://www.bls.gov/iif/fatal-injuries-tables.htm
+# Injuries (CFOI) - https://www.bls.gov/iif/oshcfoi1.htm
 #
 # Inputs:
-#   - One .xlsx file per year in /data/cfoi_rate, as downloaded from BLS
+#   - One .xlsx file per year in data/cofi_rate, as downloaded from BLS
+#     (filename must contain a 4-digit year, e.g., "cfoi_2015.xlsx")
 #
 # Outputs:
 #   - bls_fatal_injury_rate_all_years.csv
@@ -21,9 +22,10 @@
 #       one column per industry, for the subset of industries in `wanted`
 #       used in the manuscript's final tables/figures.
 # ==============================================================================
+
 # ---- 0. Setup ------------------------------------------------------------------
 
-required_pkgs <- c("readxl", "dplyr", "stringr", "purrr", "tidyr")
+required_pkgs <- c("readxl", "dplyr", "stringr", "purrr", "tidyr", "here")
 missing_pkgs  <- setdiff(required_pkgs, rownames(installed.packages()))
 if (length(missing_pkgs) > 0) install.packages(missing_pkgs)
 
@@ -32,10 +34,20 @@ library(dplyr)
 library(stringr)
 library(purrr)
 library(tidyr)
+library(here)
 
 # ---- 1. Define file paths and target categories --------------------------------
 
-local_folder <- "/Users/davidlove/Library/CloudStorage/Dropbox/CLF/Research Projects/Fishworkers/data/cfoi_rate"
+data_folder <- here("data", "cofi_rate")
+
+if (!dir.exists(data_folder)) {
+  stop(
+    "Data folder not found at ", data_folder,
+    ". Make sure the repo's data/cofi_rate folder (with raw BLS .xlsx files) ",
+    "was downloaded/cloned correctly, and that you've opened the .Rproj file ",
+    "for this repo so the working directory is set correctly."
+  )
+}
 
 # Industries/occupations to extract from each year's BLS table
 wanted_rows <- c(
@@ -57,40 +69,31 @@ wanted_rows <- c(
 
 # ---- 2. Function to extract fatal injury rate table from one year's file -------
 
-#' Extract fatal injury rate data from a single BLS CFOI Excel file
-#'
-#' Searches all sheets in the file for one containing a "Fatal injury rate"
-#' column, then extracts rows matching `wanted_rows`.
-#'
-#' @param file_path Path to a single .xlsx file (filename must contain a
-#'   4-digit year, e.g., "cfoi_2015.xlsx")
-#' @return A tibble with columns Industry, Fatal_injury_rate, Year;
-#'   or NULL if no matching sheet/data is found
 get_bls_rate <- function(file_path) {
   year <- str_extract(basename(file_path), "\\d{4}")
   message("\nProcessing year: ", year)
-  
+
   tryCatch({
     sheets <- excel_sheets(file_path)
     result <- NULL
-    
+
     for (sheet in sheets) {
-      
+
       df_raw <- read_excel(file_path, sheet = sheet, col_names = FALSE)
-      
+
       header_row <- which(apply(df_raw, 1, function(row) {
         any(str_detect(as.character(row), regex("Fatal injury rate", ignore_case = TRUE)))
       }))
-      
+
       if (length(header_row) == 0) next
       header_row <- header_row[1]
-      
+
       df <- read_excel(file_path, sheet = sheet, skip = header_row - 1)
       names(df) <- str_trim(names(df))
-      
+
       row_col  <- names(df)[1]
       rate_col <- names(df)[str_detect(names(df), regex("Fatal injury rate", ignore_case = TRUE))][1]
-      
+
       out <- df %>%
         mutate(row_value = str_trim(as.character(.data[[row_col]]))) %>%
         filter(row_value %in% wanted_rows) %>%
@@ -98,23 +101,21 @@ get_bls_rate <- function(file_path) {
           Industry          = row_value,
           Fatal_injury_rate = all_of(rate_col)
         ) %>%
-        # Convert to character first to avoid type conflicts across years,
-        # then to numeric; dashes or missing values become NA
         mutate(
           Fatal_injury_rate = as.numeric(as.character(Fatal_injury_rate)),
           Year              = as.integer(year)
         )
-      
+
       message("  Matched ", nrow(out), " rows")
-      
+
       if (nrow(out) > 0) {
         result <- out
-        break  # stop searching sheets once a match is found
+        break
       }
     }
-    
+
     result
-    
+
   }, error = function(e) {
     message("  Error processing ", basename(file_path), ": ", e$message)
     return(NULL)
@@ -123,7 +124,7 @@ get_bls_rate <- function(file_path) {
 
 # ---- 3. Process all files and combine -------------------------------------------
 
-files <- list.files(local_folder, pattern = "\\.xlsx$", full.names = TRUE)
+files <- list.files(data_folder, pattern = "\\.xlsx$", full.names = TRUE)
 message("Found ", length(files), " xlsx files")
 
 all_data <- map_dfr(files, get_bls_rate)
@@ -137,10 +138,10 @@ all_data %>% count(Year) %>% print()
 
 write.csv(
   all_data,
-  file.path(local_folder, "bls_fatal_injury_rate_all_years.csv"),
+  file.path(data_folder, "bls_fatal_injury_rate_all_years.csv"),
   row.names = FALSE
 )
-message("\nSaved combined data to ", file.path(local_folder, "bls_fatal_injury_rate_all_years.csv"))
+message("\nSaved combined data to ", file.path(data_folder, "bls_fatal_injury_rate_all_years.csv"))
 
 # ---- 4. Build wide-format summary table -----------------------------------------
 
@@ -166,7 +167,6 @@ table_wide <- all_data %>%
   ) %>%
   arrange(Year)
 
-# Add an "Average" row across all years, computed for each industry column
 numeric_cols <- setdiff(names(table_wide), "Year")
 
 average_row <- table_wide %>%
@@ -178,7 +178,7 @@ table_wide <- bind_rows(table_wide, average_row) %>%
 
 write.csv(
   table_wide,
-  file.path(local_folder, "fatal_injury_rate_table.csv"),
+  file.path(data_folder, "fatal_injury_rate_table.csv"),
   row.names = FALSE
 )
-message("Saved summary table to ", file.path(local_folder, "fatal_injury_rate_table.csv"))
+message("Saved summary table to ", file.path(data_folder, "fatal_injury_rate_table.csv"))
