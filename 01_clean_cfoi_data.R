@@ -7,11 +7,10 @@
 # a wide-format summary table (with an all-years average row).
 #
 # Data source: U.S. Bureau of Labor Statistics, Census of Fatal Occupational
-# Injuries (CFOI) - https://www.bls.gov/iif/oshcfoi1.htm
+# Injuries (CFOI) - https://www.bls.gov/iif/fatal-injuries-tables.htm
 #
 # Inputs:
 #   - One .xlsx file per year in data/cofi_rate, as downloaded from BLS
-#     (filename must contain a 4-digit year, e.g., "cfoi_2015.xlsx")
 #
 # Outputs:
 #   - bls_fatal_injury_rate_all_years.csv
