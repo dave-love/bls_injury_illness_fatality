@@ -43,6 +43,12 @@ and aquaculture).
 - **Measure used:** Fatal injury rate per 100,000 full-time equivalent
   workers
 
+## Repository structure
+- bls_injury_illness_fatality/
+- bls_injury_illness_fatality/data/
+- bls_injury_illness_fatality/output/
+- README.md
+
 ## Scripts
 
 ### `clean_nonfatal_injury_illness.R`
