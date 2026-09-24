@@ -434,7 +434,8 @@ average_row <- table_wide %>%
   mutate(Year = NA_integer_)
 
 table_wide <- bind_rows(table_wide, average_row) %>%
-  mutate(Year = ifelse(is.na(Year), "Average", as.character(Year)))
+  mutate(Year = ifelse(is.na(Year), "Average", as.character(Year))) %>%
+  mutate(across(-Year, ~ sprintf("%.1f", round(.x, 1))))
 
 print(table_wide)
 
